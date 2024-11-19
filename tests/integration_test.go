@@ -90,9 +90,9 @@ func TestSLAndDLReferences(t *testing.T) {
 	if err := voucherRepo.Delete(voucher.ID, voucher.Version); err != nil {
 		t.Errorf("failed to delete Voucher: %v", err)
 		// The DL is no longer referenced by any VoucherItem, so it can be safely deleted.
-		if err := dlRepo.Delete(dl.ID, dl.Version); err != nil {
-			t.Errorf("failed to delete DL: %v", err)
-		}
+	}
+	if err := dlRepo.Delete(dl.ID, dl.Version); err != nil {
+		t.Errorf("failed to delete DL: %v", err)
 	}
 	if err := slRepo.Delete(sl.ID, sl.Version); err != nil {
 		t.Errorf("failed to delete SL: %v", err)

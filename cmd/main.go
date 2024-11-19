@@ -8,5 +8,5 @@ func main() {
 	if err := database.Connect(); err != nil {
 		panic(err)
 	}
-	//database.Migrate()
+	database.Migrate()
 }

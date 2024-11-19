@@ -13,7 +13,7 @@ func TestVoucherItemRepo_Create(t *testing.T) {
 	voucherItemRepo := &repository.VoucherItemRepo{DB: database.DB}
 	createdVoucherItems := make(map[uint]struct{})
 	createdVouchers := make(map[uint]uint)
-	createdSLs := make(map[uint]uint)
+
 	// Dynamically create an SL (Sub Ledger)
 	slCode, slTitle := repository.GenerateRandomCodeAndTitle()
 	sl := &models.SL{
@@ -23,7 +23,6 @@ func TestVoucherItemRepo_Create(t *testing.T) {
 	if err := slRepo.Create(sl); err != nil {
 		t.Fatalf("failed to create SL: %v", err)
 	}
-	createdSLs[sl.ID] = sl.Version
 
 	sl2Code, sl2Title := repository.GenerateRandomCodeAndTitle()
 	sl2 := &models.SL{
@@ -33,7 +32,7 @@ func TestVoucherItemRepo_Create(t *testing.T) {
 	if err := slRepo.Create(sl2); err != nil {
 		t.Fatalf("failed to create SL: %v", err)
 	}
-	createdSLs[sl2.ID] = sl2.Version
+
 	// Use dynamically created SLID and VoucherID
 	voucherItem := &models.VoucherItem{
 		SLID:   sl.ID, // From the dynamically created SL
@@ -84,10 +83,11 @@ func TestVoucherItemRepo_Create(t *testing.T) {
 			t.Errorf("failed to delete Voucher: %v", err)
 		}
 	}
-	for id, version := range createdSLs {
-		if err := slRepo.Delete(id, version); err != nil {
-			t.Errorf("failed to delete SL: %v", err)
-		}
+	if err := slRepo.Delete(sl.ID, sl.Version); err != nil {
+		t.Errorf("failed to delete SL: %v", err)
+	}
+	if err := slRepo.Delete(sl2.ID, sl2.Version); err != nil {
+		t.Errorf("failed to delete SL: %v", err)
 	}
 }
 
@@ -98,7 +98,7 @@ func TestVoucherItemRepo_Create_WithDL(t *testing.T) {
 	voucherItemRepo := &repository.VoucherItemRepo{DB: database.DB}
 	createdVoucherItems := make(map[uint]struct{})
 	createdVouchers := make(map[uint]uint)
-	createdSLs := make(map[uint]uint)
+
 	createdDLs := make(map[uint]uint)
 	// Maps to track created records
 
@@ -111,7 +111,6 @@ func TestVoucherItemRepo_Create_WithDL(t *testing.T) {
 	if err := slRepo.Create(sl); err != nil {
 		t.Fatalf("failed to create SL: %v", err)
 	}
-	createdSLs[sl.ID] = sl.Version
 
 	// Dynamically create a DL (Detail Ledger)
 	dlCode, dlTitle := repository.GenerateRandomCodeAndTitle()
@@ -182,10 +181,9 @@ func TestVoucherItemRepo_Create_WithDL(t *testing.T) {
 			t.Errorf("failed to delete DL: %v", err)
 		}
 	}
-	for id, version := range createdSLs {
-		if err := slRepo.Delete(id, version); err != nil {
-			t.Errorf("failed to delete SL: %v", err)
-		}
+	if err := slRepo.Delete(sl.ID, sl.Version); err != nil {
+		t.Errorf("failed to delete SL: %v", err)
+
 	}
 }
 
