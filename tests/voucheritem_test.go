@@ -101,8 +101,6 @@ func TestVoucherItemRepo_Create_WithDL(t *testing.T) {
 	createdSLs := make(map[uint]uint)
 	createdDLs := make(map[uint]uint)
 	// Maps to track created records
-	//createdVoucherItems := make(map[uint]struct{})
-	//createdVouchers := make(map[uint]struct{})
 
 	// Dynamically create an SL (Sub Ledger)
 	slCode, slTitle := repository.GenerateRandomCodeAndTitle()
@@ -196,11 +194,6 @@ func TestVoucherRepo_Update(t *testing.T) {
 	dlRepo := &repository.DLRepo{DB: database.DB}
 	voucherRepo := &repository.VoucherRepo{DB: database.DB}
 	voucherItemRepo := &repository.VoucherItemRepo{DB: database.DB}
-	//createdVoucherItems := make(map[uint]struct{})
-	//createdVouchers := make(map[uint]uint)
-	//createdSLs := make(map[uint]uint)
-	//createdDLs := make(map[uint]uint)
-	// Step 1: Create an SL (Sub Ledger)
 	slCode, slTitle := repository.GenerateRandomCodeAndTitle()
 	sl := &models.SL{
 		Code:  slCode,
@@ -244,14 +237,17 @@ func TestVoucherRepo_Update(t *testing.T) {
 	// Step 4: Update the Voucher and its items
 	voucher.Number = "UpdatedNumber"
 	voucherItem1.Debit = 150
+	// Temporarily set credit to 50 to simulate an invalid update scenario
 	voucherItem2.Credit = 50
 	if err := voucherRepo.Update(voucher, []*models.VoucherItem{}, []*models.VoucherItem{voucherItem2, voucherItem1}, nil); err == nil {
-		t.Fatalf("wrong credit: %v", err)
+		t.Fatalf("expected error due to wrong credit, got: nil")
 	}
+	// Reset credit to 0 for a valid update
 	voucherItem2.Credit = 0
 	if err := voucherRepo.Update(voucher, []*models.VoucherItem{}, []*models.VoucherItem{voucherItem2, voucherItem1}, nil); err != nil {
 		t.Fatalf("failed to update Voucher: %v", err)
-
+	} else {
+		t.Logf("Voucher updated successfully after correcting the credit value")
 	}
 	// Step 5: Validate the updated data
 	updatedVoucher, err := voucherRepo.GetByID(voucher.ID)
@@ -278,7 +274,7 @@ func TestVoucherRepo_Update(t *testing.T) {
 		t.Fatalf("failed to retrieve updated VoucherItem2: %v", err)
 	}
 	if updatedItem2.Credit != 0 {
-		t.Errorf("expected: VoucherItem2 Credit = 50, got: %d", updatedItem2.Credit)
+		t.Errorf("expected: VoucherItem2 Credit = 0, got: %d", updatedItem2.Credit)
 	}
 
 	// Step 6: Cleanup created records
