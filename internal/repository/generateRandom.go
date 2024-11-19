@@ -5,11 +5,14 @@ import (
 	"math/rand"
 )
 
+// GenerateRandomCodeAndTitle creates a random code and title
+// Both are alphanumeric strings with a maximum length of 64 characters
 func GenerateRandomCodeAndTitle() (string, string) {
-	// Generate random alphanumeric strings within the limit of 64 characters
-	code := fmt.Sprintf("code_%d", rand.Intn(1000000))   // "code_" + random number
-	title := fmt.Sprintf("title_%d", rand.Intn(1000000)) // "title_" + random number
-	// Ensure the length is less than or equal to 64 characters
+	// Generate random code and title with "code_" and "title_" prefixes
+	code := fmt.Sprintf("code_%d", rand.Intn(1000000))   // Example: code_123456
+	title := fmt.Sprintf("title_%d", rand.Intn(1000000)) // Example: title_123456
+
+	// Ensure the length of code and title is not greater than 64 characters
 	if len(code) > 64 {
 		code = code[:64]
 	}
@@ -19,14 +22,22 @@ func GenerateRandomCodeAndTitle() (string, string) {
 
 	return code, title
 }
-func GenerateRandomBool() bool {
-	return rand.Intn(2) == 1
-}
-func GenerateRandomVoucherNumber() string {
-	voucher := fmt.Sprintf("voucher_%d", rand.Intn(1000000))
 
+// GenerateRandomBool creates a random boolean value (true or false)
+func GenerateRandomBool() bool {
+	return rand.Intn(2) == 1 // Randomly returns true or false
+}
+
+// GenerateRandomVoucherNumber creates a random voucher number
+// The result is an alphanumeric string with a maximum length of 64 characters
+func GenerateRandomVoucherNumber() string {
+	// Generate random voucher number with "voucher_" prefix
+	voucher := fmt.Sprintf("voucher_%d", rand.Intn(1000000)) // Example: voucher_123456
+
+	// Ensure the length of the voucher number is not greater than 64 characters
 	if len(voucher) > 64 {
 		voucher = voucher[:64]
 	}
+
 	return voucher
 }

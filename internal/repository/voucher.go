@@ -3,27 +3,31 @@ package repository
 import (
 	"AccountingSystem/internal/models"
 	"errors"
-	"fmt"
 	"gorm.io/gorm"
 )
 
+// VoucherRepo handles database operations for Vouchers
 type VoucherRepo struct {
 	DB *gorm.DB
 }
 
+// Create adds a new Voucher and its items to the database
 func (r *VoucherRepo) Create(voucher *models.Voucher, items []*models.VoucherItem) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
-
+		// Save the voucher
 		if err := tx.Create(voucher).Error; err != nil {
 			return err
 		}
+
+		// Save all voucher items
 		for _, item := range items {
 			item.VoucherID = voucher.ID
-			//voucher.Item = append(voucher.Item, *item)
 			if err := tx.Create(item).Error; err != nil {
 				return err
 			}
 		}
+
+		// Validate the voucher
 		if err := validateVoucher(tx, voucher); err != nil {
 			return err
 		}
@@ -31,60 +35,91 @@ func (r *VoucherRepo) Create(voucher *models.Voucher, items []*models.VoucherIte
 		return nil
 	})
 }
+
+// Delete removes a Voucher and its items from the database
 func (r *VoucherRepo) Delete(voucherID, version uint) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
 		var current models.Voucher
+
+		// Check if the voucher exists
 		if err := tx.First(&current, voucherID).Error; err != nil {
 			return errors.New("voucher not found")
 		}
+
+		// Check version for consistency
 		if current.Version != version {
 			return errors.New("version mismatch")
 		}
+
+		// Delete associated items
 		if err := tx.Where("voucher_id = ?", voucherID).Delete(&models.VoucherItem{}).Error; err != nil {
 			return errors.New("failed to delete voucher items")
 		}
+
+		// Delete the voucher
 		if err := tx.Delete(&current).Error; err != nil {
 			return errors.New("failed to delete voucher")
 		}
+
 		return nil
 	})
 }
+
+// GetByID retrieves a Voucher by its ID, including its items
 func (r *VoucherRepo) GetByID(id uint) (*models.Voucher, error) {
 	var voucher models.Voucher
+
+	// Use Preload to load related items
 	if err := r.DB.Preload("Item").First(&voucher, id).Error; err != nil {
 		return nil, errors.New("voucher not found")
 	}
+
 	return &voucher, nil
 }
+
+// Update modifies a Voucher and handles its related items
 func (r *VoucherRepo) Update(voucher *models.Voucher, inserted, updated []*models.VoucherItem, deleted []uint) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
 		var current models.Voucher
+
+		// Check if the voucher exists
 		if err := tx.First(&current, voucher.ID).Error; err != nil {
 			return errors.New("voucher not found")
 		}
+
+		// Check version for consistency
 		if current.Version != voucher.Version {
-			fmt.Println(current.Version, voucher.Version)
 			return errors.New("version mismatch")
 		}
+
+		// Insert new items
 		for _, item := range inserted {
 			item.VoucherID = voucher.ID
 			if err := tx.Create(&item).Error; err != nil {
-				return errors.New("failed to insert voucher item" + err.Error())
+				return errors.New("failed to insert voucher item: " + err.Error())
 			}
 		}
+
+		// Update existing items
 		for _, item := range updated {
 			if err := tx.Save(&item).Error; err != nil {
 				return errors.New("failed to update voucher item")
 			}
 		}
+
+		// Delete items
 		if len(deleted) > 0 {
 			if err := tx.Where("id IN ?", deleted).Delete(&models.VoucherItem{}).Error; err != nil {
 				return errors.New("failed to delete voucher items")
 			}
 		}
+
+		// Validate the voucher
 		if err := validateVoucher(tx, voucher); err != nil {
-			return errors.New("voucher validation failed" + err.Error())
+			return errors.New("voucher validation failed: " + err.Error())
 		}
+
+		// Update the voucher version and save it
 		voucher.Version = current.Version + 1
 		if err := tx.Save(voucher).Error; err != nil {
 			return errors.New("failed to update voucher")
@@ -94,50 +129,14 @@ func (r *VoucherRepo) Update(voucher *models.Voucher, inserted, updated []*model
 	})
 }
 
-func validateVoucherItemCount(db *gorm.DB, voucher *models.Voucher) error {
-	var count int64
-	db.Model(&models.VoucherItem{}).Where("voucher_id = ?", voucher.ID).Count(&count)
-
-	if count < 2 {
-		return errors.New("voucher must have at least two item")
-	}
-	if count > 500 {
-		return errors.New("voucher must have at most 500 items")
-	}
-	return nil
-}
-
-//	func validateVoucherBalance(items []models.VoucherItem) error {
-//		var debit, credit int32
-//		for _, item := range items {
-//			debit += item.Debit
-//			credit += item.Credit
-//		}
-//		if debit != credit {
-//			return errors.New("voucher must be balanced")
-//		}
-//		return nil
-//	}
-//
-//	func validateSLAndDL(db *gorm.DB, items []models.VoucherItem) error {
-//		for _, v := range items {
-//			var sl models.SL
-//			if err := db.First(&sl, v.SLID).Error; err != nil {
-//				return errors.New("SL not found")
-//			}
-//			if v.DLID != nil {
-//				var dl models.DL
-//				if err := db.First(&dl, *v.DLID).Error; err != nil {
-//					return errors.New("DL not found")
-//				}
-//			}
-//		}
-//		return nil
-//	}
+// validateVoucher checks the voucher for business rules
 func validateVoucher(db *gorm.DB, voucher *models.Voucher) error {
+	// Validate item count
 	if err := validateVoucherItemCount(db, voucher); err != nil {
 		return err
 	}
+
+	// Validate SL, DL, and balance for each item
 	var items []models.VoucherItem
 	db.Model(&models.VoucherItem{}).Where("voucher_id = ?", voucher.ID).Find(&items)
 
