@@ -10,7 +10,7 @@ import (
 var DB *gorm.DB
 
 func Connect() error {
-	dsn := "host=localhost user=postgres password=DNRAA7tayxWcdZA  dbname=accountingsystem port=5432 sslmode=disable"
+	dsn := LoadEnv()
 	var err error
 
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -18,7 +18,7 @@ func Connect() error {
 		return errors.New("failed to connect database")
 
 	}
-	return errors.New("connected to database")
+	return nil
 
 }
 func Migrate() error {
@@ -27,5 +27,5 @@ func Migrate() error {
 		return errors.New("failed to migrate tables")
 	}
 
-	return errors.New("migrated tables")
+	return nil
 }
