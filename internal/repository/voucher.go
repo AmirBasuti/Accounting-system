@@ -43,7 +43,7 @@ func (r *VoucherRepo) Delete(voucherID, version uint) error {
 
 		// Check if the voucher exists
 		if err := tx.First(&current, voucherID).Error; err != nil {
-			return errors.New("voucher not found")
+			return errors.New("voucher not found" + err.Error())
 		}
 
 		// Check version for consistency
@@ -53,12 +53,12 @@ func (r *VoucherRepo) Delete(voucherID, version uint) error {
 
 		// Delete associated items
 		if err := tx.Where("voucher_id = ?", voucherID).Delete(&models.VoucherItem{}).Error; err != nil {
-			return errors.New("failed to delete voucher items")
+			return errors.New("failed to delete voucher items" + err.Error())
 		}
 
 		// Delete the voucher
 		if err := tx.Delete(&current).Error; err != nil {
-			return errors.New("failed to delete voucher")
+			return errors.New("failed to delete voucher" + err.Error())
 		}
 
 		return nil
@@ -71,7 +71,7 @@ func (r *VoucherRepo) GetByID(id uint) (*models.Voucher, error) {
 
 	// Use Preload to load related items
 	if err := r.DB.Preload("Item").First(&voucher, id).Error; err != nil {
-		return nil, errors.New("voucher not found")
+		return nil, errors.New("voucher not found" + err.Error())
 	}
 
 	return &voucher, nil
@@ -84,7 +84,7 @@ func (r *VoucherRepo) Update(voucher *models.Voucher, inserted, updated []*model
 
 		// Check if the voucher exists
 		if err := tx.First(&current, voucher.ID).Error; err != nil {
-			return errors.New("voucher not found")
+			return errors.New("voucher not found" + err.Error())
 		}
 
 		// Check version for consistency
@@ -110,7 +110,7 @@ func (r *VoucherRepo) Update(voucher *models.Voucher, inserted, updated []*model
 		// Delete items
 		if len(deleted) > 0 {
 			if err := tx.Where("id IN ?", deleted).Delete(&models.VoucherItem{}).Error; err != nil {
-				return errors.New("failed to delete voucher items")
+				return errors.New("failed to delete voucher items" + err.Error())
 			}
 		}
 
@@ -122,7 +122,7 @@ func (r *VoucherRepo) Update(voucher *models.Voucher, inserted, updated []*model
 		// Update the voucher version and save it
 		voucher.Version = current.Version + 1
 		if err := tx.Save(voucher).Error; err != nil {
-			return errors.New("failed to update voucher")
+			return errors.New("failed to update voucher" + err.Error())
 		}
 
 		return nil

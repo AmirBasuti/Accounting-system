@@ -22,7 +22,7 @@ func (r *VoucherItemRepo) GetByID(id uint) (*models.VoucherItem, error) {
 
 	// Try to find the VoucherItem
 	if err := r.DB.First(&item, id).Error; err != nil {
-		return nil, errors.New("voucher item not found")
+		return nil, errors.New("voucher item not found" + err.Error())
 	}
 
 	return &item, nil
@@ -36,7 +36,6 @@ func (r *VoucherItemRepo) Update(item *models.VoucherItem) error {
 		return err
 	}
 
-	// Save the updated VoucherItem
 	return r.DB.Save(item).Error
 }
 
@@ -48,6 +47,5 @@ func (r *VoucherItemRepo) Create(item *models.VoucherItem) error {
 		return err
 	}
 
-	// Save the new VoucherItem
 	return r.DB.Create(item).Error
 }

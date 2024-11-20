@@ -63,7 +63,7 @@ func (r *SLRepo) Delete(id, version uint) error {
 
 	// Check if the SL exists
 	if err := r.DB.First(&sl, id).Error; err != nil {
-		return errors.New("SL not found")
+		return errors.New("SL not found" + err.Error())
 	}
 
 	// Check version to avoid conflicts

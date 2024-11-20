@@ -47,21 +47,21 @@ func TestSLAndDLReferences(t *testing.T) {
 	voucherItem2 := &models.VoucherItem{SLID: sl2.ID, DLID: nil, Debit: 100, Credit: 0}
 	voucherItem3 := &models.VoucherItem{SLID: sl3.ID, DLID: nil, Debit: 100, Credit: 0}
 	if err := voucherRepo.Create(voucher, []*models.VoucherItem{voucherItem, voucherItem2}); err != nil {
-		// Attempting to delete SL should fail because it is referenced in a VoucherItem
-		if err := slRepo.Delete(sl.ID, sl.Version); err == nil {
-			t.Fatalf("expected error when deleting referenced SL, got nil")
-		}
-		// Test SL and DL should not be deleted if referenced in VoucherItem
-		if err := slRepo.Delete(sl.ID, sl.Version); err == nil {
-			t.Fatalf("expected error when deleting referenced SL, got nil")
-		}
+	}
+	// Attempting to delete SL should fail because it is referenced in a VoucherItem
+	if err := slRepo.Delete(sl.ID, sl.Version); err == nil {
+		t.Fatalf("expected error when deleting referenced SL, got nil")
+	}
+	// Test SL and DL should not be deleted if referenced in VoucherItem
+	if err := slRepo.Delete(sl.ID, sl.Version); err == nil {
+		t.Fatalf("expected error when deleting referenced SL, got nil")
+	}
 
-		// Test SL should not be updated if referenced in VoucherItem
-		// This update is expected to fail because the SL is referenced in a VoucherItem.
-		sl.Title = "Updated Title"
-		if err := slRepo.Update(sl); err == nil {
-			t.Fatalf("expected error when updating referenced SL, got nil")
-		}
+	// Test SL should not be updated if referenced in VoucherItem
+	// This update is expected to fail because the SL is referenced in a VoucherItem.
+	sl.Title = "Updated Title"
+	if err := slRepo.Update(sl); err == nil {
+		t.Fatalf("expected error when updating referenced SL, got nil")
 	}
 
 	// Test DL must exist in the database if IsDetail is true

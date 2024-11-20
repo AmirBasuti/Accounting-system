@@ -6,11 +6,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Constant for "detail not found" error message
-const (
-	ErrDetailNotFound = "detail not found"
-)
-
 // DLRepo is the struct for handling DL-related database operations
 type DLRepo struct {
 	DB *gorm.DB
@@ -28,7 +23,7 @@ func (r *DLRepo) Update(detail *models.DL) error {
 
 	// Find the existing detail by ID
 	if err := r.DB.First(&current, detail.ID).Error; err != nil {
-		return errors.New(ErrDetailNotFound)
+		return errors.New("detail not found")
 	}
 
 	// Check if the version matches to avoid conflicts
@@ -48,9 +43,8 @@ func (r *DLRepo) Delete(id, version uint) error {
 
 	// Check if the detail exists
 	if err := r.DB.First(&current, id).Error; err != nil {
-		return errors.New(ErrDetailNotFound)
+		return errors.New("detail not found" + err.Error())
 	}
-
 	// Check if the version matches to avoid conflicts
 	if current.Version != version {
 		return errors.New("version mismatch: the record has been updated by another process")
@@ -73,7 +67,7 @@ func (r *DLRepo) GetByID(id uint) (*models.DL, error) {
 
 	// Try to find the detail
 	if err := r.DB.First(&detail, id).Error; err != nil {
-		return nil, errors.New(ErrDetailNotFound)
+		return nil, errors.New("detail not found" + err.Error())
 	}
 
 	return &detail, nil

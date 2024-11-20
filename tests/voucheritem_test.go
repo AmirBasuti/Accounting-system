@@ -244,8 +244,6 @@ func TestVoucherRepo_Update(t *testing.T) {
 	voucherItem2.Credit = 0
 	if err := voucherRepo.Update(voucher, []*models.VoucherItem{}, []*models.VoucherItem{voucherItem2, voucherItem1}, nil); err != nil {
 		t.Fatalf("failed to update Voucher: %v", err)
-	} else {
-		t.Logf("Voucher updated successfully after correcting the credit value")
 	}
 	// Step 5: Validate the updated data
 	updatedVoucher, err := voucherRepo.GetByID(voucher.ID)
